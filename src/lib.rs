@@ -17,26 +17,32 @@
 
 use core::ops::IndexMut;
 
-struct DigitalFilter<T>
-where T: ExactSizeIterator<Item=f32> + IndexMut<usize, Output=f32> {
-    coeffs: T,
-    buffer: T,
+extern crate heapless;
+use heapless::RingBuffer;
+use heapless::consts::*;
+
+type FilterBuf = [f32; 3];
+type FilterRing = RingBuffer<f32, U3>;
+
+struct DigitalFilter {
+    coeffs: FilterBuf,
+    buffer: FilterRing,
     num_taps: usize
 }
 
-impl<T> DigitalFilter<T>
-where T: ExactSizeIterator<Item=f32> + IndexMut<usize, Output=f32> {
-    fn new(coeffs: T, buffer: T) -> Self {
-        let num_taps = buffer.len();
+impl DigitalFilter {
+    fn new(coeffs: FilterBuf, buffer: FilterRing) -> Self {
+        let num_taps = coeffs.len();
         DigitalFilter { coeffs, buffer, num_taps }
     }
 
     fn filter(mut self, input: f32) -> f32 {
-        let output = self.buffer[self.num_taps-1];
-        for idx in (1..self.num_taps).rev() {
-            self.buffer[idx] = self.buffer[idx - 1]*self.coeffs[idx];
+        let _ = self.buffer.dequeue();
+        self.buffer.enqueue(input).unwrap();
+        let mut output: f32 = 0_f32;
+        for (idx, el) in self.buffer.iter().enumerate() {
+            output += el * self.coeffs[idx];
         }
-        self.buffer[0] = input*self.coeffs[0];
         output
     }
 }

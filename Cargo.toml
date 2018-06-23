@@ -4,4 +4,8 @@ name = "digital-filter"
 version = "0.1.0"
 
 [dependencies]
-heapless = "0.3.6"
+generic-array = "0.11.1"
+typenum = "1.10.0"
+
+[dependencies.heapless]
+git = "https://github.com/ReeceStevens/heapless"

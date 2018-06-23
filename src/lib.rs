@@ -67,11 +67,12 @@ where
 
 #[cfg(test)]
 mod tests {
+    use DigitalFilter;
+    use heapless::RingBuffer;
+
     #[test]
     fn basic_filter_test() {
-        use DigitalFilter;
-        use heapless::RingBuffer;
-        use heapless::consts::{U3,U6};
+        use heapless::consts::U3;
         let mut coeffs = arr![f32; 1., 1., 1.];
         let mut buffer: RingBuffer<f32,U3> = RingBuffer::new();
         let mut filter = DigitalFilter::new(coeffs, buffer);

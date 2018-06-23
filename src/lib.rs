@@ -12,8 +12,6 @@
 
 #![no_std]
 
-use core::ops::IndexMut;
-
 #[macro_use]
 extern crate generic_array;
 extern crate heapless;
@@ -29,7 +27,7 @@ type FilterItem = f32;
 type FilterBuf<N: ArrayLength<FilterItem>> = GenericArray<FilterItem,N>;
 type FilterRing<N: ArrayLength<FilterItem>> = RingBuffer<FilterItem, N>;
 
-struct DigitalFilter<N>
+pub struct DigitalFilter<N>
 where
     N: Add<U1> + ArrayLength<FilterItem>,
     Sum<N, U1>: ArrayLength<FilterItem>
@@ -44,16 +42,16 @@ where
     N: Add<U1> + ArrayLength<FilterItem>,
     Sum<N, U1>: ArrayLength<FilterItem>
 {
-    fn new(coeffs: FilterBuf<N>, mut buffer: FilterRing<N>) -> Self {
+    pub fn new(coeffs: FilterBuf<N>, mut buffer: FilterRing<N>) -> Self {
         let num_taps = coeffs.len();
         // Initialize the buffer
-        for idx in 0..num_taps {
+        for _idx in 0..num_taps {
             buffer.enqueue(0.).unwrap();
         }
         DigitalFilter { coeffs, buffer, num_taps }
     }
 
-    fn filter(&mut self, input: f32) -> f32 {
+    pub fn filter(&mut self, input: f32) -> f32 {
         let _ = self.buffer.dequeue();
         self.buffer.enqueue(input).unwrap();
         let mut output: f32 = 0_f32;

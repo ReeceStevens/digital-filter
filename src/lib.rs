@@ -42,14 +42,16 @@ where
     N: Add<U1> + ArrayLength<FilterItem>,
     Sum<N, U1>: ArrayLength<FilterItem>
 {
-    pub fn new(coeffs: FilterBuf<N>, mut buffer: FilterRing<N>) -> Self {
+    pub fn new(coeffs: FilterBuf<N>) -> Self {
         let num_taps = coeffs.len();
+        let mut buffer: FilterRing<N> = RingBuffer::new();
         // Initialize the buffer
         for _idx in 0..num_taps {
             buffer.enqueue(0.).unwrap();
         }
         DigitalFilter { coeffs, buffer, num_taps }
     }
+
 
     pub fn filter(&mut self, input: f32) -> f32 {
         let _ = self.buffer.dequeue();
@@ -72,8 +74,7 @@ mod tests {
     fn basic_filter_test() {
         use heapless::consts::U3;
         let mut coeffs = arr![f32; 1., 1., 1.];
-        let mut buffer: RingBuffer<f32,U3> = RingBuffer::new();
-        let mut filter = DigitalFilter::new(coeffs, buffer);
+        let mut filter = DigitalFilter::new(coeffs);
         let inputs = [4., 8., 15., 16., 23., 42.];
         let expected_output = [4., 12., 27., 39., 54., 81.];
         let mut actual_output = [0.; 6];

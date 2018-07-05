@@ -24,8 +24,8 @@ use generic_array::{GenericArray, ArrayLength};
 use typenum::Sum;
 
 type FilterItem = f32;
-type FilterBuf<N: ArrayLength<FilterItem>> = GenericArray<FilterItem,N>;
-type FilterRing<N: ArrayLength<FilterItem>> = RingBuffer<FilterItem, N>;
+type FilterBuf<N> = GenericArray<FilterItem, N>;
+type FilterRing<N> = RingBuffer<FilterItem, N>;
 
 pub struct DigitalFilter<N>
 where
@@ -33,8 +33,7 @@ where
     Sum<N, U1>: ArrayLength<FilterItem>
 {
     coeffs: FilterBuf<N>,
-    buffer: FilterRing<N>,
-    num_taps: usize
+    buffer: FilterRing<N>
 }
 
 impl<N> DigitalFilter<N>
@@ -45,11 +44,10 @@ where
     pub fn new(coeffs: FilterBuf<N>) -> Self {
         let num_taps = coeffs.len();
         let mut buffer: FilterRing<N> = RingBuffer::new();
-        // Initialize the buffer
         for _idx in 0..num_taps {
             buffer.enqueue(0.).unwrap();
         }
-        DigitalFilter { coeffs, buffer, num_taps }
+        DigitalFilter { coeffs, buffer }
     }
 
 
@@ -68,12 +66,10 @@ where
 #[cfg(test)]
 mod tests {
     use DigitalFilter;
-    use heapless::RingBuffer;
 
     #[test]
     fn basic_filter_test() {
-        use heapless::consts::U3;
-        let mut coeffs = arr![f32; 1., 1., 1.];
+        let coeffs = arr![f32; 1., 1., 1.];
         let mut filter = DigitalFilter::new(coeffs);
         let inputs = [4., 8., 15., 16., 23., 42.];
         let expected_output = [4., 12., 27., 39., 54., 81.];

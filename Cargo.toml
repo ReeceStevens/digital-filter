@@ -6,6 +6,4 @@ version = "0.1.0"
 [dependencies]
 generic-array = "0.11.1"
 typenum = "1.10.0"
-
-[dependencies.heapless]
-git = "https://github.com/ReeceStevens/heapless"
+heapless = "0.3.7"

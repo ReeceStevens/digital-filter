@@ -55,8 +55,10 @@ where
         let _ = self.buffer.dequeue();
         self.buffer.enqueue(input).unwrap();
         let mut output: f32 = 0_f32;
-        for (idx, el) in self.buffer.iter().enumerate() {
-            output += el * self.coeffs[idx];
+        let mut c_idx = self.coeffs.len();
+        for el in self.buffer.iter() {
+            c_idx -= 1;
+            output += el * self.coeffs[c_idx];
         }
         output
     }
@@ -73,6 +75,19 @@ mod tests {
         let mut filter = DigitalFilter::new(coeffs);
         let inputs = [4., 8., 15., 16., 23., 42.];
         let expected_output = [4., 12., 27., 39., 54., 81.];
+        let mut actual_output = [0.; 6];
+        for (idx, input) in inputs.iter().enumerate() {
+            actual_output[idx] = filter.filter(*input);
+        }
+        assert_eq!(expected_output, actual_output);
+    }
+
+    #[test]
+    fn varying_weight_filter_test() {
+        let coeffs = arr![f32; 1., 2., 3.];
+        let mut filter = DigitalFilter::new(coeffs);
+        let inputs = [4., 8., 15., 16., 23., 42.];
+        let expected_output = [4., 16., 43., 70., 100., 136.];
         let mut actual_output = [0.; 6];
         for (idx, input) in inputs.iter().enumerate() {
             actual_output[idx] = filter.filter(*input);

@@ -9,28 +9,24 @@
 //! this crate is to be a self-contained way to apply a digital filter in an embedded system. It
 //! doesn't perform filter design, so you'll need an external tool to design the filter weights for
 //! input. SciPy and Matlab both have excellent tools for this (`scipy.signal.firwin` for SciPy).
-
 #![no_std]
+#![allow(unused_imports)]
 
 #[macro_use]
 extern crate generic_array;
 extern crate heapless;
 extern crate typenum;
 
-use core::ops::Add;
-use heapless::RingBuffer;
-use heapless::consts::*;
+use heapless::spsc::Queue;
 use generic_array::{GenericArray, ArrayLength};
-use typenum::Sum;
 
 type FilterItem = f32;
 type FilterBuf<N> = GenericArray<FilterItem, N>;
-type FilterRing<N> = RingBuffer<FilterItem, N>;
+type FilterRing<N> = Queue<FilterItem, N>;
 
 pub struct DigitalFilter<N>
 where
-    N: Add<U1> + ArrayLength<FilterItem>,
-    Sum<N, U1>: ArrayLength<FilterItem>
+    N: ArrayLength<FilterItem> + heapless::ArrayLength<FilterItem>,
 {
     coeffs: FilterBuf<N>,
     buffer: FilterRing<N>
@@ -38,12 +34,11 @@ where
 
 impl<N> DigitalFilter<N>
 where
-    N: Add<U1> + ArrayLength<FilterItem>,
-    Sum<N, U1>: ArrayLength<FilterItem>
+    N: ArrayLength<FilterItem> + heapless::ArrayLength<FilterItem>,
 {
     pub fn new(coeffs: FilterBuf<N>) -> Self {
         let num_taps = coeffs.len();
-        let mut buffer: FilterRing<N> = RingBuffer::new();
+        let mut buffer: FilterRing<N> = Queue::new();
         for _idx in 0..num_taps {
             buffer.enqueue(0.).unwrap();
         }

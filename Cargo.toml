@@ -2,6 +2,8 @@
 authors = ["Reece Stevens <reecestevens24@gmail.com>"]
 name = "digital-filter"
 version = "0.1.1"
+description = "A simple digital filter library"
+license = "MIT"
 
 [dependencies]
 generic-array = "0.13.2"

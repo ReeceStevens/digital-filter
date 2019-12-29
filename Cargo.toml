@@ -1,11 +1,15 @@
 [package]
 authors = ["Reece Stevens <reecestevens24@gmail.com>"]
 name = "digital-filter"
-version = "0.1.1"
+version = "0.2.0"
 description = "A simple digital filter library"
 license = "MIT"
 
 [dependencies]
-generic-array = "0.13.2"
 typenum = "1.11.2"
 heapless = "0.5.1"
+
+
+[dependencies.generic-array]
+git = "https://github.com/reecestevens/generic-array"
+features = ["more_lengths"]

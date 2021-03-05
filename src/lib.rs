@@ -57,6 +57,15 @@ where
         }
         output
     }
+
+    /// Wipe all stored memory from the filter.
+    pub fn clear_buffer(&mut self) {
+        let num_taps = self.coeffs.len();
+        while self.buffer.dequeue().is_some() {};
+        for _idx in 0..num_taps {
+            self.buffer.enqueue(0.).unwrap();
+        }
+    }
 }
 
 

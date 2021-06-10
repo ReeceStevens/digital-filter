@@ -6,10 +6,4 @@ description = "A simple digital filter library"
 license = "MIT"
 
 [dependencies]
-typenum = "1.11.2"
-heapless = "0.5.1"
-
-
-[dependencies.generic-array]
-git = "https://github.com/reecestevens/generic-array"
-features = ["more_lengths"]
+heapless = "0.7.1"

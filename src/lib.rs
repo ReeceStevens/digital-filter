@@ -12,37 +12,40 @@
 #![no_std]
 #![allow(unused_imports)]
 
-#[macro_use]
-extern crate generic_array;
 extern crate heapless;
-extern crate typenum;
 
 use heapless::spsc::Queue;
-use generic_array::{GenericArray, ArrayLength};
 
 type FilterItem = f32;
-type FilterBuf<N> = GenericArray<FilterItem, N>;
-type FilterRing<N> = Queue<FilterItem, N>;
+type FilterBuf<const N: usize> = [FilterItem; N];
+type FilterRing<const N: usize> = Queue<FilterItem, N>;
 
-pub struct DigitalFilter<N>
-where
-    N: ArrayLength<FilterItem> + heapless::ArrayLength<FilterItem>,
+pub struct DigitalFilter<const N: usize>
 {
     coeffs: FilterBuf<N>,
-    buffer: FilterRing<N>
+    buffer: FilterRing<N>,
+    num_taps: usize,
 }
 
-impl<N> DigitalFilter<N>
-where
-    N: ArrayLength<FilterItem> + heapless::ArrayLength<FilterItem>,
+impl<const N: usize> DigitalFilter<N>
 {
+    /// Create a new `DigitalFilter` using the provided coefficients.
+    ///
+    /// # IMPORTANT: `coeffs` must contain one unused element of 0 at the end
+    ///
+    /// Note that due to current limitations of const generics, we cannot specify that `FilterRing`
+    /// should have size N+1. Therefore, we have to work around this by adding a "dummy" parameter
+    /// to coeffs.
     pub fn new(coeffs: FilterBuf<N>) -> Self {
-        let num_taps = coeffs.len();
+        let num_taps = coeffs.len() - 1;
+        if coeffs[num_taps] != 0. {
+            panic!("Sentinel not found at end of supplied coeffs");
+        }
         let mut buffer: FilterRing<N> = Queue::new();
         for _idx in 0..num_taps {
             buffer.enqueue(0.).unwrap();
         }
-        DigitalFilter { coeffs, buffer }
+        DigitalFilter { coeffs, buffer, num_taps }
     }
 
 
@@ -50,7 +53,7 @@ where
         let _ = self.buffer.dequeue();
         self.buffer.enqueue(input).unwrap();
         let mut output: f32 = 0_f32;
-        let mut c_idx = self.coeffs.len();
+        let mut c_idx = self.num_taps;
         for el in self.buffer.iter() {
             c_idx -= 1;
             output += el * self.coeffs[c_idx];
@@ -60,9 +63,8 @@ where
 
     /// Wipe all stored memory from the filter.
     pub fn clear_buffer(&mut self) {
-        let num_taps = self.coeffs.len();
         while self.buffer.dequeue().is_some() {};
-        for _idx in 0..num_taps {
+        for _idx in 0..self.num_taps {
             self.buffer.enqueue(0.).unwrap();
         }
     }
@@ -75,7 +77,7 @@ mod tests {
 
     #[test]
     fn basic_filter_test() {
-        let coeffs = arr![f32; 1., 1., 1.];
+        let coeffs = [1., 1., 1., 0.];
         let mut filter = DigitalFilter::new(coeffs);
         let inputs = [4., 8., 15., 16., 23., 42.];
         let expected_output = [4., 12., 27., 39., 54., 81.];
@@ -88,7 +90,7 @@ mod tests {
 
     #[test]
     fn varying_weight_filter_test() {
-        let coeffs = arr![f32; 1., 2., 3.];
+        let coeffs = [1., 2., 3., 0.];
         let mut filter = DigitalFilter::new(coeffs);
         let inputs = [4., 8., 15., 16., 23., 42.];
         let expected_output = [4., 16., 43., 70., 100., 136.];
@@ -97,5 +99,13 @@ mod tests {
             actual_output[idx] = filter.filter(*input);
         }
         assert_eq!(expected_output, actual_output);
+    }
+
+
+    #[test]
+    #[should_panic]
+    fn enforce_sentinel_suffix() {
+        let coeffs = [1., 1., 1., 1.]; // No sentinel 0 at the end
+        DigitalFilter::new(coeffs);
     }
 }
